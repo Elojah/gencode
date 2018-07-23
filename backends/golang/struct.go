@@ -3,7 +3,7 @@ package golang
 import (
 	"fmt"
 
-	"github.com/andyleap/gencode/schema"
+	"github.com/elojah/gencode/schema"
 )
 
 func (w *Walker) WalkStruct(s *schema.Struct) (parts *StringBuilder, err error) {
@@ -13,25 +13,29 @@ func (w *Walker) WalkStruct(s *schema.Struct) (parts *StringBuilder, err error) 
 		Signed: false,
 		VarInt: true,
 	}
-	parts.Append(fmt.Sprintf(`type %s struct {
+
+	if w.GenerateTypes {
+		parts.Append(fmt.Sprintf(`type %s struct {
 	`, s.Name))
-	for _, f := range s.Fields {
-		p, err := w.WalkFieldDef(f)
-		if err != nil {
-			return nil, err
-		}
-		parts.Join(p)
-		parts.Append(`
+		for _, f := range s.Fields {
+			p, err := w.WalkFieldDef(f)
+			if err != nil {
+				return nil, err
+			}
+			parts.Join(p)
+			parts.Append(`
 	`)
-	}
-	if !s.Framed {
+		}
 		parts.Append(fmt.Sprintf(`}
-	
+`))
+	}
+
+	if !s.Framed {
+		parts.Append(fmt.Sprintf(`
 func (d *%s) Size() (s uint64) {
 	`, s.Name))
 	} else {
-		parts.Append(fmt.Sprintf(`}
-	
+		parts.Append(fmt.Sprintf(`
 func (d *%s) FramedSize() (s uint64, us uint64) {
 	`, s.Name))
 	}
@@ -60,7 +64,7 @@ func (d *%s) FramedSize() (s uint64, us uint64) {
 		parts.Join(intcode)
 	}
 	parts.Append(fmt.Sprintf(`
-	return 
+	return
 }`))
 
 	if s.Framed {
@@ -108,7 +112,7 @@ func (d *%s) Marshal(buf []byte) ([]byte, error) {`, s.Name))
 	parts.Append(fmt.Sprintf(`
 	return buf[:i+%d], nil
 }
-	
+
 func (d *%s) Unmarshal(buf []byte) (uint64, error) {
 	i := uint64(0)
 	`, w.Offset, s.Name))

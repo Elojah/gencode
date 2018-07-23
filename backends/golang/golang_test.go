@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/andyleap/gencode/schema"
+	"github.com/elojah/gencode/schema"
 	"github.com/kr/pretty"
 )
 
@@ -29,7 +29,7 @@ func TestGolangBackend(t *testing.T) {
 	} {
 		inputF := filepath.Join("./testdata", tc)
 		outputF := filepath.Join(dir, tc+".go")
-		goldenF := inputF+".golden.go"
+		goldenF := inputF + ".golden.go"
 
 		in, err := ioutil.ReadFile(inputF)
 		if err != nil {
@@ -40,7 +40,7 @@ func TestGolangBackend(t *testing.T) {
 			t.Fatalf("%v: Failed schema.ParseSchema: %v", tc, err)
 		}
 
-		b := GolangBackend{Package: "testdata"}
+		b := GolangBackend{Package: "testdata", GenerateTypes: true}
 		g, err := b.Generate(s)
 		if err != nil {
 			t.Fatalf("%v: Failed Generate: %v", tc, err)

@@ -4,17 +4,19 @@ import (
 	"flag"
 	"go/format"
 
-	"github.com/andyleap/gencode/schema"
+	"github.com/elojah/gencode/schema"
 )
 
 type GolangBackend struct {
-	Package string
-	Unsafe  bool
+	Package       string
+	Unsafe        bool
+	GenerateTypes bool
 }
 
 func (gb *GolangBackend) Generate(s *schema.Schema) (string, error) {
 	w := &Walker{}
 	w.Unsafe = gb.Unsafe
+	w.GenerateTypes = gb.GenerateTypes
 	def, err := w.WalkSchema(s, gb.Package)
 	if err != nil {
 		return "", err
@@ -30,6 +32,7 @@ func (gb *GolangBackend) Flags() *flag.FlagSet {
 	flags := flag.NewFlagSet("Go", flag.ExitOnError)
 	flags.StringVar(&gb.Package, "package", "main", "package to build the gencode system for")
 	flags.BoolVar(&gb.Unsafe, "unsafe", false, "Generate faster, but unsafe code")
+	flags.BoolVar(&gb.GenerateTypes, "types", true, "Generate new types from schemas")
 	return flags
 }
 

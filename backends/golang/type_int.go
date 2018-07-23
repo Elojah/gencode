@@ -3,7 +3,7 @@ package golang
 import (
 	"text/template"
 
-	"github.com/andyleap/gencode/schema"
+	"github.com/elojah/gencode/schema"
 )
 
 var (
@@ -23,7 +23,7 @@ func init() {
 	template.Must(IntTemps.New("marshal").Parse(`
 	{
 		{{if .VarInt }}
-		
+
 		t := uint{{.Bits}}({{.Target}})
 		{{if .Signed}}
 		t <<= 1
@@ -38,9 +38,9 @@ func init() {
 		}
 		buf[i + {{.W.Offset}}] = byte(t)
 		i++
-		
+
 		{{else}}
-		
+
 		{{if .W.Unsafe}}
 		*(*{{if not .Signed}}u{{end}}int{{.Bits}})(unsafe.Pointer(&buf[{{if $.W.IAdjusted}}i + {{end}}{{$.W.Offset}}])) = {{.Target}}
 		{{else}}
@@ -48,7 +48,7 @@ func init() {
 		buf[{{if $.W.IAdjusted}}i + {{end}}{{Bytes .}} + {{$.W.Offset}}] = byte({{$.Target}} >> {{.}})
 		{{end}}
 		{{end}}
-		
+
 		{{end}}
 	}`))
 	template.Must(IntTemps.New("unmarshal").Parse(`
@@ -70,15 +70,15 @@ func init() {
 		{{else}}
 		{{.Target}} = t
 		{{end}}
-		
+
 		{{else}}
-		
+
 		{{if .W.Unsafe}}
 		{{.Target}} = *(*{{if not .Signed}}u{{end}}int{{.Bits}})(unsafe.Pointer(&buf[{{if $.W.IAdjusted}}i + {{end}}{{$.W.Offset}}]))
 		{{else}}
 		{{$.Target}} = 0{{range BitRange .Bits}} | ({{if not $.Signed}}u{{end}}int{{$.Bits}}(buf[{{if $.W.IAdjusted}}i + {{end}}{{Bytes .}} + {{$.W.Offset}}]) << {{.}}){{end}}
 		{{end}}
-		
+
 		{{end}}
 	}`))
 	template.Must(IntTemps.New("field").Parse(`{{if not .Signed}}u{{end}}int{{.Bits}}`))
