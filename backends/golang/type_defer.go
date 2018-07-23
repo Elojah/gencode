@@ -1,6 +1,6 @@
 package golang
 
-import "github.com/andyleap/gencode/schema"
+import "github.com/elojah/gencode/schema"
 
 func (w *Walker) WalkDeferDef(dt *schema.DeferType) (parts *StringBuilder, err error) {
 	return w.WalkTypeDef(dt.Resolved)

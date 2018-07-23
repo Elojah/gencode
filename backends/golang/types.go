@@ -3,7 +3,7 @@ package golang
 import (
 	"fmt"
 
-	"github.com/andyleap/gencode/schema"
+	"github.com/elojah/gencode/schema"
 )
 
 func (w *Walker) WalkTypeDef(t schema.Type) (*StringBuilder, error) {
