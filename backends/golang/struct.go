@@ -14,7 +14,7 @@ func (w *Walker) WalkStruct(s *schema.Struct) (parts *StringBuilder, err error) 
 		VarInt: true,
 	}
 
-	if w.GenerateTypes {
+	if w.DefStruct {
 		parts.Append(fmt.Sprintf(`type %s struct {
 	`, s.Name))
 		for _, f := range s.Fields {

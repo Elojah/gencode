@@ -7,11 +7,12 @@ import (
 )
 
 type Walker struct {
-	Needs         []string
-	Offset        int
-	IAdjusted     bool
-	Unsafe        bool
-	GenerateTypes bool
+	Needs     []string
+	Offset    int
+	IAdjusted bool
+	Unsafe    bool
+	DefStruct bool
+	Ignore    map[string]struct{}
 }
 
 func (w *Walker) WalkSchema(s *schema.Schema, Package string) (parts *StringBuilder, err error) {
@@ -31,6 +32,9 @@ func (w *Walker) WalkSchema(s *schema.Schema, Package string) (parts *StringBuil
 	)
 	`, Package))
 	for _, st := range s.Structs {
+		if _, ok := w.Ignore[st.Name]; ok {
+			continue
+		}
 		p, err := w.WalkStruct(st)
 		if err != nil {
 			return nil, err
