@@ -65,7 +65,8 @@ func (d *%s) FramedSize() (s uint64, us uint64) {
 	}
 	parts.Append(fmt.Sprintf(`
 	return
-}`))
+}
+`))
 
 	if s.Framed {
 		parts.Append(fmt.Sprintf(`
@@ -112,10 +113,12 @@ func (d *%s) Marshal(buf []byte) ([]byte, error) {`, s.Name))
 	parts.Append(fmt.Sprintf(`
 	return buf[:i+%d], nil
 }
+`, w.Offset))
 
+	parts.Append(fmt.Sprintf(`
 func (d *%s) Unmarshal(buf []byte) (uint64, error) {
 	i := uint64(0)
-	`, w.Offset, s.Name))
+	`, s.Name))
 	w.Offset = 0
 	if s.Framed {
 		parts.Append(`usize := uint64(0)
@@ -141,6 +144,41 @@ func (d *%s) Unmarshal(buf []byte) (uint64, error) {
 	return i + %d, nil
 }
 `, w.Offset))
+
+	parts.Append(fmt.Sprintf(`
+func (d *%s) UnmarshalSafe(buf []byte) (uint64, error) {
+	lb := uint64(len(buf))
+	if lb < d.Size() {
+		return 0, io.EOF
+	}
+	i := uint64(0)
+	`, s.Name))
+	w.Offset = 0
+	if s.Framed {
+		parts.Append(`usize := uint64(0)
+	`)
+		intcode, err := w.WalkIntUnmarshal(intHandler, "usize")
+		if err != nil {
+			return nil, err
+		}
+		parts.Join(intcode)
+		parts.Append(`
+	if usize > uint64(len(buf))+i {
+		return 0, io.EOF
+	}`)
+	}
+	for _, f := range s.Fields {
+		p, err := w.WalkFieldUnmarshal(f)
+		if err != nil {
+			return nil, err
+		}
+		parts.Join(p)
+	}
+	parts.Append(fmt.Sprintf(`
+	return i + %d, nil
+}
+`, w.Offset))
+
 	w.Offset = 0
 	w.IAdjusted = false
 	if s.Framed {
