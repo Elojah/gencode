@@ -41,6 +41,14 @@ func init() {
 		copy({{.Target}}[:], buf[{{if $.W.IAdjusted}}i + {{end}}{{$.W.Offset}}:])
 		i += {{.Count}}
 	}`))
+	template.Must(ArrayTemps.New("byteunmarshal_safe").Parse(`
+	{
+		if {{if $.W.IAdjusted}}i + {{end}}{{$.W.Offset}} >= lb {
+			return 0, io.EOF
+		}
+		copy({{.Target}}[:], buf[{{if $.W.IAdjusted}}i + {{end}}{{$.W.Offset}}:])
+		i += {{.Count}}
+	}`))
 	template.Must(ArrayTemps.New("size").Parse(`
 	{
 		for k := range {{.Target}} {
@@ -155,7 +163,7 @@ func (w *Walker) WalkArrayUnmarshalSafe(at *schema.ArrayType, target string) (pa
 		return nil, err
 	}
 	if _, ok := at.SubType.(*schema.ByteType); ok {
-		err = parts.AddTemplate(ArrayTemps, "byteunmarshal", ArrayTemp{at, w, SubOffset, target, subtypecode.String(), subfield.String()})
+		err = parts.AddTemplate(ArrayTemps, "byteunmarshal_safe", ArrayTemp{at, w, SubOffset, target, subtypecode.String(), subfield.String()})
 	} else {
 		err = parts.AddTemplate(ArrayTemps, "unmarshal", ArrayTemp{at, w, SubOffset, target, subtypecode.String(), subfield.String()})
 	}

@@ -88,7 +88,7 @@ func init() {
 		{{end}}
 		{{else}}
 		for k{{.Index}} := range {{.Target}} {
-			_ = k{{.Index}}
+			_ = k{{.Index}} // make compiler happy in case k is unused
 			{{.SubTypeCode}}
 			{{if gt .SubOffset 0 }}
 			s += {{.SubOffset}}
