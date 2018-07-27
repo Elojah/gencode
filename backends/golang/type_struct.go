@@ -29,6 +29,18 @@ func init() {
 		}
 		i += ni
 	}`))
+	template.Must(StructTemps.New("unmarshal_safe").Parse(`
+	{
+		adjust := {{if .W.IAdjusted}}i + {{end}}{{.W.Offset}}
+		if adjust >= lb {
+			return 0, io.EOF
+		}
+		ni, err := {{.Target}}.UnmarshalSafe(buf[adjust:])
+		if err != nil {
+			return 0, err
+		}
+		i += ni
+	}`))
 	template.Must(StructTemps.New("size").Parse(`
 	{
 		s += {{.Target}}.Size()
@@ -71,7 +83,7 @@ func (w *Walker) WalkStructUnmarshal(st *schema.StructType, target string) (part
 
 func (w *Walker) WalkStructUnmarshalSafe(st *schema.StructType, target string) (parts *StringBuilder, err error) {
 	parts = &StringBuilder{}
-	err = parts.AddTemplate(StructTemps, "unmarshal", StructTemp{st, w, target})
+	err = parts.AddTemplate(StructTemps, "unmarshal_safe", StructTemp{st, w, target})
 	w.IAdjusted = true
 	return
 }

@@ -27,9 +27,9 @@ func init() {
 		t := uint{{.Bits}}({{.Target}})
 		{{if .Signed}}
 		t <<= 1
-   		if {{.Target}} < 0 {
-   			t = ^t
-   		}
+			if {{.Target}} < 0 {
+				t = ^t
+			}
 		{{end}}
 		for t >= 0x80 {
 			buf[i + {{.W.Offset}}] = byte(t) | 0x80
@@ -56,7 +56,40 @@ func init() {
 		{{if .VarInt}}
 		bs := uint8(7)
 		t := uint{{.Bits}}(buf[i + {{.W.Offset}}] & 0x7F)
-		for i+l+1 < lb && buf[i + {{.W.Offset}}] & 0x80 == 0x80 {
+		for buf[i + {{.W.Offset}}] & 0x80 == 0x80 {
+			i++
+			t |= uint{{.Bits}}(buf[i + {{.W.Offset}}]&0x7F) << bs
+			bs += 7
+		}
+		i++
+		{{if .Signed}}
+		{{.Target}} = int{{.Bits}}(t >> 1)
+		if t&1 != 0 {
+			{{.Target}} = ^{{.Target}}
+		}
+		{{else}}
+		{{.Target}} = t
+		{{end}}
+
+		{{else}}
+
+		{{if .W.Unsafe}}
+		{{.Target}} = *(*{{if not .Signed}}u{{end}}int{{.Bits}})(unsafe.Pointer(&buf[{{if $.W.IAdjusted}}i + {{end}}{{$.W.Offset}}]))
+		{{else}}
+		{{$.Target}} = 0{{range BitRange .Bits}} | ({{if not $.Signed}}u{{end}}int{{$.Bits}}(buf[{{if $.W.IAdjusted}}i + {{end}}{{Bytes .}} + {{$.W.Offset}}]) << {{.}}){{end}}
+		{{end}}
+
+		{{end}}
+	}`))
+	template.Must(IntTemps.New("unmarshal_safe").Parse(`
+	{
+		{{if .VarInt}}
+		if i+{{.W.Offset}} >= lb {
+			return 0, io.EOF
+		}
+		bs := uint8(7)
+		t := uint{{.Bits}}(buf[i + {{.W.Offset}}] & 0x7F)
+		for i < lb && buf[i + {{.W.Offset}}] & 0x80 == 0x80 {
 			i++
 			t |= uint{{.Bits}}(buf[i + {{.W.Offset}}]&0x7F) << bs
 			bs += 7
@@ -156,7 +189,7 @@ func (w *Walker) WalkIntUnmarshal(it *schema.IntType, target string) (parts *Str
 
 func (w *Walker) WalkIntUnmarshalSafe(it *schema.IntType, target string) (parts *StringBuilder, err error) {
 	parts = &StringBuilder{}
-	err = parts.AddTemplate(IntTemps, "unmarshal", IntTemp{it, w, target})
+	err = parts.AddTemplate(IntTemps, "unmarshal_safe", IntTemp{it, w, target})
 	if !it.VarInt {
 		w.Offset += it.Bits / 8
 	} else {

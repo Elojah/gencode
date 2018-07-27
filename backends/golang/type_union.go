@@ -51,6 +51,24 @@ func init() {
 			{{.Target}} = nil
 		}
 	}`))
+	template.Must(UnionTemps.New("unmarshal_safe").Parse(`
+	{
+		v := uint64(0)
+		{{.VarIntCode}}
+		switch v {
+			{{range $id, $type := .SubTypeField}}
+		case {{$id}} + 1:
+			var tt {{$type}}
+			{{index $.SubTypeCode $id}}
+			{{if gt (index $.SubTypeOffset $id) 0 }}
+			i += {{index $.SubTypeOffset $id}}
+			{{end}}
+			{{$.Target}} = tt
+			{{end}}
+		default:
+			{{.Target}} = nil
+		}
+	}`))
 	template.Must(UnionTemps.New("size").Parse(`
 	{
 		var v uint64
@@ -204,7 +222,7 @@ func (w *Walker) WalkUnionUnmarshalSafe(ut *schema.UnionType, target string) (pa
 		Signed: false,
 		VarInt: true,
 	}
-	intcode, err := w.WalkIntUnmarshal(intHandler, "v")
+	intcode, err := w.WalkIntUnmarshalSafe(intHandler, "v")
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +230,7 @@ func (w *Walker) WalkUnionUnmarshalSafe(ut *schema.UnionType, target string) (pa
 	subtypeoffsets := []int{}
 	for _, st := range ut.Types {
 		offset := w.Offset
-		subType, err := w.WalkTypeUnmarshal(st, "tt")
+		subType, err := w.WalkTypeUnmarshalSafe(st, "tt")
 		if err != nil {
 			return nil, err
 		}
@@ -229,6 +247,6 @@ func (w *Walker) WalkUnionUnmarshalSafe(ut *schema.UnionType, target string) (pa
 		}
 		subtypefields = append(subtypefields, subType.String())
 	}
-	err = parts.AddTemplate(UnionTemps, "unmarshal", UnionTemp{ut, target, intcode.String(), subtypecodes, subtypefields, subtypeoffsets})
+	err = parts.AddTemplate(UnionTemps, "unmarshal_safe", UnionTemp{ut, target, intcode.String(), subtypecodes, subtypefields, subtypeoffsets})
 	return
 }

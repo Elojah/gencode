@@ -27,6 +27,16 @@ func init() {
 		{{.Target}} = string(buf[{{if .W.IAdjusted}}i + {{end}}{{.W.Offset}}:{{if .W.IAdjusted}}i + {{end}}{{.W.Offset}}+l])
 		i += l
 	}`))
+	template.Must(StringTemps.New("unmarshal_safe").Parse(`
+	{
+		l := uint64(0)
+		{{.VarIntCode}}
+		{{.Target}} = string(buf[{{if .W.IAdjusted}}i + {{end}}{{.W.Offset}}:{{if .W.IAdjusted}}i + {{end}}{{.W.Offset}}+l])
+		i += l
+		if d.Size() > lb {
+			return 0, io.EOF
+		}
+	}`))
 	template.Must(StringTemps.New("size").Parse(`
 	{
 		l := uint64(len({{.Target}}))
@@ -105,6 +115,6 @@ func (w *Walker) WalkStringUnmarshalSafe(st *schema.StringType, target string) (
 	if err != nil {
 		return nil, err
 	}
-	err = parts.AddTemplate(StringTemps, "unmarshal", StringTemp{st, w, target, intcode.String()})
+	err = parts.AddTemplate(StringTemps, "unmarshal_safe", StringTemp{st, w, target, intcode.String()})
 	return
 }

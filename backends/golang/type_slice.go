@@ -37,9 +37,22 @@ func init() {
 			{{.Target}} = make([]{{.SubField}}, l)
 		}
 		for k{{.Index}} := range {{.Target}} {
-			if i >= lb {
-				return 0, io.EOF
-			}
+			{{.SubTypeCode}}
+			{{if gt .SubOffset 0 }}
+			i += {{.SubOffset}}
+			{{end}}
+		}
+	}`))
+	template.Must(SliceTemps.New("unmarshal_safe").Parse(`
+	{
+		l := uint64(0)
+		{{.VarIntCode}}
+		if uint64(cap({{.Target}})) >= l {
+			{{.Target}} = {{.Target}}[:l]
+		} else {
+			{{.Target}} = make([]{{.SubField}}, l)
+		}
+		for k{{.Index}} := range {{.Target}} {
 			{{.SubTypeCode}}
 			{{if gt .SubOffset 0 }}
 			i += {{.SubOffset}}
@@ -232,7 +245,7 @@ func (w *Walker) WalkSliceUnmarshalSafe(st *schema.SliceType, target string) (pa
 	if _, ok := st.SubType.(*schema.ByteType); ok {
 		err = parts.AddTemplate(SliceTemps, "byteunmarshal", SliceTemp{st, w, SubOffset, target, subtypecode.String(), subfield.String(), intcode.String(), sliceIteratorDepth})
 	} else {
-		err = parts.AddTemplate(SliceTemps, "unmarshal", SliceTemp{st, w, SubOffset, target, subtypecode.String(), subfield.String(), intcode.String(), sliceIteratorDepth})
+		err = parts.AddTemplate(SliceTemps, "unmarshal_safe", SliceTemp{st, w, SubOffset, target, subtypecode.String(), subfield.String(), intcode.String(), sliceIteratorDepth})
 	}
 	return
 }
