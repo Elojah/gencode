@@ -139,3 +139,25 @@ func (w *Walker) WalkArrayUnmarshal(at *schema.ArrayType, target string) (parts 
 	}
 	return
 }
+
+func (w *Walker) WalkArrayUnmarshalSafe(at *schema.ArrayType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	w.IAdjusted = true
+	offset := w.Offset
+	subtypecode, err := w.WalkTypeUnmarshalSafe(at.SubType, target+"[k]")
+	if err != nil {
+		return nil, err
+	}
+	SubOffset := w.Offset - offset
+	w.Offset = offset
+	subfield, err := w.WalkTypeDef(at.SubType)
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := at.SubType.(*schema.ByteType); ok {
+		err = parts.AddTemplate(ArrayTemps, "byteunmarshal", ArrayTemp{at, w, SubOffset, target, subtypecode.String(), subfield.String()})
+	} else {
+		err = parts.AddTemplate(ArrayTemps, "unmarshal", ArrayTemp{at, w, SubOffset, target, subtypecode.String(), subfield.String()})
+	}
+	return
+}

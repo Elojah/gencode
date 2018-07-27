@@ -37,6 +37,9 @@ func init() {
 			{{.Target}} = make([]{{.SubField}}, l)
 		}
 		for k{{.Index}} := range {{.Target}} {
+			if i >= lb {
+				return 0, io.EOF
+			}
 			{{.SubTypeCode}}
 			{{if gt .SubOffset 0 }}
 			i += {{.SubOffset}}
@@ -184,6 +187,38 @@ func (w *Walker) WalkSliceUnmarshal(st *schema.SliceType, target string) (parts 
 	offset := w.Offset
 	sliceIteratorDepth++
 	subtypecode, err := w.WalkTypeUnmarshal(st.SubType, fmt.Sprintf("%s[k%d]", target, sliceIteratorDepth-1))
+	sliceIteratorDepth--
+	if err != nil {
+		return nil, err
+	}
+	SubOffset := w.Offset - offset
+	w.Offset = offset
+	subfield, err := w.WalkTypeDef(st.SubType)
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := st.SubType.(*schema.ByteType); ok {
+		err = parts.AddTemplate(SliceTemps, "byteunmarshal", SliceTemp{st, w, SubOffset, target, subtypecode.String(), subfield.String(), intcode.String(), sliceIteratorDepth})
+	} else {
+		err = parts.AddTemplate(SliceTemps, "unmarshal", SliceTemp{st, w, SubOffset, target, subtypecode.String(), subfield.String(), intcode.String(), sliceIteratorDepth})
+	}
+	return
+}
+
+func (w *Walker) WalkSliceUnmarshalSafe(st *schema.SliceType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	intHandler := &schema.IntType{
+		Bits:   64,
+		Signed: false,
+		VarInt: true,
+	}
+	intcode, err := w.WalkIntUnmarshalSafe(intHandler, "l")
+	if err != nil {
+		return nil, err
+	}
+	offset := w.Offset
+	sliceIteratorDepth++
+	subtypecode, err := w.WalkTypeUnmarshalSafe(st.SubType, fmt.Sprintf("%s[k%d]", target, sliceIteratorDepth-1))
 	sliceIteratorDepth--
 	if err != nil {
 		return nil, err

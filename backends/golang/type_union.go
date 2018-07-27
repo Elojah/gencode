@@ -196,3 +196,39 @@ func (w *Walker) WalkUnionUnmarshal(ut *schema.UnionType, target string) (parts 
 	err = parts.AddTemplate(UnionTemps, "unmarshal", UnionTemp{ut, target, intcode.String(), subtypecodes, subtypefields, subtypeoffsets})
 	return
 }
+
+func (w *Walker) WalkUnionUnmarshalSafe(ut *schema.UnionType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	intHandler := &schema.IntType{
+		Bits:   64,
+		Signed: false,
+		VarInt: true,
+	}
+	intcode, err := w.WalkIntUnmarshal(intHandler, "v")
+	if err != nil {
+		return nil, err
+	}
+	subtypecodes := []string{}
+	subtypeoffsets := []int{}
+	for _, st := range ut.Types {
+		offset := w.Offset
+		subType, err := w.WalkTypeUnmarshal(st, "tt")
+		if err != nil {
+			return nil, err
+		}
+		SubOffset := w.Offset - offset
+		w.Offset = offset
+		subtypeoffsets = append(subtypeoffsets, SubOffset)
+		subtypecodes = append(subtypecodes, subType.String())
+	}
+	subtypefields := []string{}
+	for _, st := range ut.Types {
+		subType, err := w.WalkTypeDef(st)
+		if err != nil {
+			return nil, err
+		}
+		subtypefields = append(subtypefields, subType.String())
+	}
+	err = parts.AddTemplate(UnionTemps, "unmarshal", UnionTemp{ut, target, intcode.String(), subtypecodes, subtypefields, subtypeoffsets})
+	return
+}

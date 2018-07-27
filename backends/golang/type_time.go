@@ -59,3 +59,10 @@ func (w *Walker) WalkTimeUnmarshal(tt *schema.TimeType, target string) (parts *S
 	w.Offset += 15
 	return
 }
+
+func (w *Walker) WalkTimeUnmarshalSafe(tt *schema.TimeType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	err = parts.AddTemplate(TimeTemps, "unmarshal", TimeTemp{tt, w, target})
+	w.Offset += 15
+	return
+}

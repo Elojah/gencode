@@ -54,3 +54,10 @@ func (w *Walker) WalkByteUnmarshal(bt *schema.ByteType, target string) (parts *S
 	w.Offset++
 	return
 }
+
+func (w *Walker) WalkByteUnmarshalSafe(bt *schema.ByteType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	err = parts.AddTemplate(ByteTemps, "unmarshal", ByteTemp{bt, w, target})
+	w.Offset++
+	return
+}

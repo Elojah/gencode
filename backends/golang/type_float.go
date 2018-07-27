@@ -74,3 +74,10 @@ func (w *Walker) WalkFloatUnmarshal(ft *schema.FloatType, target string) (parts 
 	w.Offset += ft.Bits / 8
 	return
 }
+
+func (w *Walker) WalkFloatUnmarshalSafe(ft *schema.FloatType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	err = parts.AddTemplate(FloatTemps, "unmarshal", FloatTemp{ft, w, target})
+	w.Offset += ft.Bits / 8
+	return
+}

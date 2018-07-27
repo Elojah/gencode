@@ -120,3 +120,23 @@ func (w *Walker) WalkPointerUnmarshal(pt *schema.PointerType, target string) (pa
 	w.Offset++
 	return
 }
+
+func (w *Walker) WalkPointerUnmarshalSafe(pt *schema.PointerType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	Offset := w.Offset
+	w.Offset++
+	subtypecode, err := w.WalkTypeUnmarshal(pt.SubType, "(*"+target+")")
+	if err != nil {
+		return nil, err
+	}
+	subfield, err := w.WalkTypeDef(pt.SubType)
+	if err != nil {
+		return nil, err
+	}
+	SubOffset := w.Offset - (Offset + 1)
+	w.Offset = Offset
+	err = parts.AddTemplate(PointerTemps, "unmarshal", PointerTemp{pt, w, SubOffset, target, subtypecode.String(), subfield.String()})
+	w.IAdjusted = true
+	w.Offset++
+	return
+}

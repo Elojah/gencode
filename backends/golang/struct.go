@@ -168,7 +168,7 @@ func (d *%s) UnmarshalSafe(buf []byte) (uint64, error) {
 	}`)
 	}
 	for _, f := range s.Fields {
-		p, err := w.WalkFieldUnmarshal(f)
+		p, err := w.WalkFieldUnmarshalSafe(f)
 		if err != nil {
 			return nil, err
 		}
@@ -271,4 +271,8 @@ func (w *Walker) WalkFieldMarshal(s *schema.Field) (parts *StringBuilder, err er
 
 func (w *Walker) WalkFieldUnmarshal(s *schema.Field) (parts *StringBuilder, err error) {
 	return w.WalkTypeUnmarshal(s.Type, "d."+s.Name)
+}
+
+func (w *Walker) WalkFieldUnmarshalSafe(s *schema.Field) (parts *StringBuilder, err error) {
+	return w.WalkTypeUnmarshalSafe(s.Type, "d."+s.Name)
 }

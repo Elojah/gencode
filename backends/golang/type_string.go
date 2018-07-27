@@ -93,3 +93,18 @@ func (w *Walker) WalkStringUnmarshal(st *schema.StringType, target string) (part
 	err = parts.AddTemplate(StringTemps, "unmarshal", StringTemp{st, w, target, intcode.String()})
 	return
 }
+
+func (w *Walker) WalkStringUnmarshalSafe(st *schema.StringType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	intHandler := &schema.IntType{
+		Bits:   64,
+		Signed: false,
+		VarInt: true,
+	}
+	intcode, err := w.WalkIntUnmarshalSafe(intHandler, "l")
+	if err != nil {
+		return nil, err
+	}
+	err = parts.AddTemplate(StringTemps, "unmarshal", StringTemp{st, w, target, intcode.String()})
+	return
+}

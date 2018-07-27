@@ -125,3 +125,33 @@ func (w *Walker) WalkTypeUnmarshal(t schema.Type, target string) (*StringBuilder
 	}
 	return nil, fmt.Errorf("No such type %T", t)
 }
+
+func (w *Walker) WalkTypeUnmarshalSafe(t schema.Type, target string) (*StringBuilder, error) {
+	switch tt := t.(type) {
+	case *schema.ArrayType:
+		return w.WalkArrayUnmarshalSafe(tt, target)
+	case *schema.BoolType:
+		return w.WalkBoolUnmarshalSafe(tt, target)
+	case *schema.ByteType:
+		return w.WalkByteUnmarshalSafe(tt, target)
+	case *schema.DeferType:
+		return w.WalkDeferUnmarshalSafe(tt, target)
+	case *schema.FloatType:
+		return w.WalkFloatUnmarshalSafe(tt, target)
+	case *schema.IntType:
+		return w.WalkIntUnmarshalSafe(tt, target)
+	case *schema.PointerType:
+		return w.WalkPointerUnmarshalSafe(tt, target)
+	case *schema.SliceType:
+		return w.WalkSliceUnmarshalSafe(tt, target)
+	case *schema.StringType:
+		return w.WalkStringUnmarshalSafe(tt, target)
+	case *schema.StructType:
+		return w.WalkStructUnmarshalSafe(tt, target)
+	case *schema.TimeType:
+		return w.WalkTimeUnmarshalSafe(tt, target)
+	case *schema.UnionType:
+		return w.WalkUnionUnmarshalSafe(tt, target)
+	}
+	return nil, fmt.Errorf("No such type %T", t)
+}

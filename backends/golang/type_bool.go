@@ -58,3 +58,10 @@ func (w *Walker) WalkBoolUnmarshal(bt *schema.BoolType, target string) (parts *S
 	w.Offset++
 	return
 }
+
+func (w *Walker) WalkBoolUnmarshalSafe(bt *schema.BoolType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	err = parts.AddTemplate(BoolTemps, "unmarshal", BoolTemp{bt, w, target})
+	w.Offset++
+	return
+}

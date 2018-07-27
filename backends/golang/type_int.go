@@ -56,7 +56,7 @@ func init() {
 		{{if .VarInt}}
 		bs := uint8(7)
 		t := uint{{.Bits}}(buf[i + {{.W.Offset}}] & 0x7F)
-		for buf[i + {{.W.Offset}}] & 0x80 == 0x80 {
+		for i+l+1 < lb && buf[i + {{.W.Offset}}] & 0x80 == 0x80 {
 			i++
 			t |= uint{{.Bits}}(buf[i + {{.W.Offset}}]&0x7F) << bs
 			bs += 7
@@ -144,6 +144,17 @@ func (w *Walker) WalkIntMarshal(it *schema.IntType, target string) (parts *Strin
 }
 
 func (w *Walker) WalkIntUnmarshal(it *schema.IntType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	err = parts.AddTemplate(IntTemps, "unmarshal", IntTemp{it, w, target})
+	if !it.VarInt {
+		w.Offset += it.Bits / 8
+	} else {
+		w.IAdjusted = true
+	}
+	return
+}
+
+func (w *Walker) WalkIntUnmarshalSafe(it *schema.IntType, target string) (parts *StringBuilder, err error) {
 	parts = &StringBuilder{}
 	err = parts.AddTemplate(IntTemps, "unmarshal", IntTemp{it, w, target})
 	if !it.VarInt {

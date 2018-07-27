@@ -68,3 +68,10 @@ func (w *Walker) WalkStructUnmarshal(st *schema.StructType, target string) (part
 	w.IAdjusted = true
 	return
 }
+
+func (w *Walker) WalkStructUnmarshalSafe(st *schema.StructType, target string) (parts *StringBuilder, err error) {
+	parts = &StringBuilder{}
+	err = parts.AddTemplate(StructTemps, "unmarshal", StructTemp{st, w, target})
+	w.IAdjusted = true
+	return
+}

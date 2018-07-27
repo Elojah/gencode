@@ -17,3 +17,7 @@ func (w *Walker) WalkDeferMarshal(dt *schema.DeferType, target string) (parts *S
 func (w *Walker) WalkDeferUnmarshal(dt *schema.DeferType, target string) (parts *StringBuilder, err error) {
 	return w.WalkTypeUnmarshal(dt.Resolved, target)
 }
+
+func (w *Walker) WalkDeferUnmarshalSafe(dt *schema.DeferType, target string) (parts *StringBuilder, err error) {
+	return w.WalkTypeUnmarshalSafe(dt.Resolved, target)
+}
